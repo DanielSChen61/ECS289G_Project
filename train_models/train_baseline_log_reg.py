@@ -1,116 +1,96 @@
-from tensorflow.keras import layers, Model, optimizers
-from tensorflow.keras.preprocessing.image import load_img
-from tensorflow.keras.applications.vgg16 import VGG16
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.metrics import Precision, Recall
 from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score, recall_score
+from tensorflow.keras.preprocessing.image import load_img
 
 import numpy as np
 import glob
-
 
 # Preprocessing the image dataset -----
 train_data = []
 val_data = []
 test_data = []
 
-train_labels = []
-val_labels = []
-test_labels = []
+y_train = []
+y_val = []
+y_test = []
+
+# normal : 1
+# pneumonia_bacteria : 2
+# pneumonia_virus : 3
 
 # Training dataset -----
 for image in glob.glob("image_data/chest_xray/train/NORMAL/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     train_data.append(image)
-    train_labels.append('normal')
+    y_train.append(1)
 
 for image in glob.glob("image_data/chest_xray/train/PNEUMONIA_bacteria/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     train_data.append(image)
-    train_labels.append('pneumonia_bacteria')
+    y_train.append(2)
 
 for image in glob.glob("image_data/chest_xray/train/PNEUMONIA_virus/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     train_data.append(image)
-    train_labels.append('pneumonia_virus')
+    y_train.append(3)
 
 # Validation dataset -----
 for image in glob.glob("image_data/chest_xray/val/NORMAL/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     val_data.append(image)
-    val_labels.append('normal')
+    y_val.append(1)
 
 for image in glob.glob("image_data/chest_xray/val/PNEUMONIA_bacteria/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     val_data.append(image)
-    val_labels.append('pneumonia_bacteria')
+    y_val.append(2)
 
 for image in glob.glob("image_data/chest_xray/val/PNEUMONIA_virus/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     val_data.append(image)
-    val_labels.append('pneumonia_virus')
+    y_val.append(3)
 
 # Test dataset -----
 for image in glob.glob("image_data/chest_xray/test/NORMAL/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     test_data.append(image)
-    test_labels.append('normal')
+    y_test.append(1)
 
 for image in glob.glob("image_data/chest_xray/test/PNEUMONIA_bacteria/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     test_data.append(image)
-    test_labels.append('pneumonia_bacteria')
+    y_test.append(2)
 
 for image in glob.glob("image_data/chest_xray/test/PNEUMONIA_virus/*.*"):
     image = load_img(image, color_mode='rgb', target_size=(224, 224))
     image = np.array(image)
     test_data.append(image)
-    test_labels.append('pneumonia_virus')
+    y_test.append(3)
 
 
 X_train = np.array(train_data).astype('float32') / 255
 X_val = np.array(val_data).astype('float32') / 255
 X_test = np.array(test_data).astype('float32') / 255
 
-lb = LabelEncoder()
-y_train = to_categorical(lb.fit_transform(train_labels))
-y_val = to_categorical(lb.fit_transform(val_labels))
-y_test = to_categorical(lb.fit_transform(test_labels))
+X_train = X_train.reshape(5208, 224 * 224 * 3)
+X_val = X_val.reshape(24, 224 * 224 * 3)
+X_test = X_test.reshape(624, 224 * 224 * 3)
 
 
-# Build the model -----
-vgg = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+model = LogisticRegression().fit(X_train, y_train)
+predictions = model.predict(X_test)
 
-# Freeze the first four convolution blocks in vgg16 and only make last block trainable
-for layer in vgg.layers[:15]:
-    layer.trainable = False
+precision = precision_score(y_test, predictions, average='macro')
+recall = recall_score(y_test, predictions, average='macro')
 
-x = vgg.output
-x = layers.Flatten()(x)
-x = layers.Dense(128, activation='relu')(x)
-x = layers.Dropout(0.4)(x)
-x = layers.Dense(64, activation='relu')(x)
-x = layers.Dropout(0.2)(x)
-x = layers.Dense(3, activation='softmax')(x)
-model = Model(inputs=vgg.input, outputs=x)
-
-# More hyperparameters
-learning_rate = 7.5e-7
-batch_size = 32
-epochs = 20
-optimizer = optimizers.Adam(learning_rate)
-
-model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=[Precision(), Recall()])
-history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val))
-print("Training done...\n")
-
-print("Results on Test Dataset")
-results = model.evaluate(X_test, y_test, batch_size=batch_size)
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
