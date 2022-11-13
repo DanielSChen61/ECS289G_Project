@@ -1,114 +1,46 @@
-from tensorflow.keras import layers, Model, optimizers
-from tensorflow.keras.preprocessing.image import load_img
-from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import layers, Model, optimizers
+from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras.metrics import Precision, Recall
 from sklearn.preprocessing import LabelEncoder
 
+import tensorflow as tf
+import tensorflow_io as tfio
 import numpy as np
 import glob
 import random
+import os
 
 
 # Preprocessing the image dataset -----
-# train_data = []
-# val_data = []
-# test_data = []
-
-# train_labels = []
-# val_labels = []
-# test_labels = []
-
 train_set = []
-val_set = []
 test_set = []
 
-# Training dataset -----
-for image in glob.glob("image_data/chest_xray/train/NORMAL/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    train_set.append((image, 'normal'))
-    # train_data.append(image)
-    # train_labels.append('normal')
+for file in glob.glob('image_data/stage_2_train_normal_full/*.*'):
+    image_bytes = tf.io.read_file(file)
+    image = tfio.image.decode_dicom_image(image_bytes, dtype=tf.uint16)
+    resized_image = tf.squeeze(tf.image.resize(image, size=(224, 224)), [0])
+    resized_image = tf.image.grayscale_to_rgb(resized_image)
+    resized_image = np.array(resized_image)
+    train_set.append((resized_image, 'normal'))
 
-for image in glob.glob("image_data/chest_xray/train/PNEUMONIA_bacteria/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    train_set.append((image, 'pneumonia_bacteria'))
-    # train_data.append(image)
-    # train_labels.append('pneumonia_bacteria')
-
-for image in glob.glob("image_data/chest_xray/train/PNEUMONIA_virus/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    train_set.append((image, 'pneumonia_virus'))
-    # train_data.append(image)
-    # train_labels.append('pneumonia_virus')
-
-# Validation dataset -----
-for image in glob.glob("image_data/chest_xray/val/NORMAL/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    val_set.append((image, 'normal'))
-    # val_data.append(image)
-    # val_labels.append('normal')
-
-for image in glob.glob("image_data/chest_xray/val/PNEUMONIA_bacteria/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    val_set.append((image, 'pneumonia_bacteria'))
-    # val_data.append(image)
-    # val_labels.append('pneumonia_bacteria')
-
-for image in glob.glob("image_data/chest_xray/val/PNEUMONIA_virus/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    val_set.append((image, 'pneumonia_virus'))
-    # val_data.append(image)
-    # val_labels.append('pneumonia_virus')
-
-# Test dataset -----
-for image in glob.glob("image_data/chest_xray/test/NORMAL/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    test_set.append((image, 'normal'))
-    # test_data.append(image)
-    # test_labels.append('normal')
-
-for image in glob.glob("image_data/chest_xray/test/PNEUMONIA_bacteria/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    test_set.append((image, 'pneumonia_bacteria'))
-    # test_data.append(image)
-    # test_labels.append('pneumonia_bacteria')
-
-for image in glob.glob("image_data/chest_xray/test/PNEUMONIA_virus/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(224, 224))
-    image = np.array(image)
-    test_set.append((image, 'pneumonia_virus'))
-    # test_data.append(image)
-    # test_labels.append('pneumonia_virus')
+for file in glob.glob('image_data/stage_2_train_pneumonia_full/*.*'):
+    image_bytes = tf.io.read_file(file)
+    image = tfio.image.decode_dicom_image(image_bytes, dtype=tf.uint16)
+    resized_image = tf.squeeze(tf.image.resize(image, size=(224, 224)), [0])
+    resized_image = tf.image.grayscale_to_rgb(resized_image)
+    resized_image = np.array(resized_image)
+    train_set.append((resized_image, 'pneumonia'))
 
 random.shuffle(train_set)
-random.shuffle(val_set)
-random.shuffle(test_set)
 
 train_data = list(zip(*train_set))[0]
-val_data = list(zip(*val_set))[0]
-test_data = list(zip(*test_set))[0]
-
 train_labels = list(zip(*train_set))[1]
-val_labels = list(zip(*val_set))[1]
-test_labels = list(zip(*test_set))[1]
 
 X_train = np.array(train_data).astype('float32') / 255
-X_val = np.array(val_data).astype('float32') / 255
-X_test = np.array(test_data).astype('float32') / 255
 
 lb = LabelEncoder()
 y_train = to_categorical(lb.fit_transform(train_labels))
-y_val = to_categorical(lb.fit_transform(val_labels))
-y_test = to_categorical(lb.fit_transform(test_labels))
 
 
 # Build the model -----
@@ -124,18 +56,16 @@ x = layers.Dense(128, activation='relu')(x)
 x = layers.Dropout(0.4)(x)
 x = layers.Dense(64, activation='relu')(x)
 x = layers.Dropout(0.2)(x)
-x = layers.Dense(3, activation='softmax')(x)
+x = layers.Dense(2, activation='softmax')(x)
 model = Model(inputs=vgg.input, outputs=x)
 
 # More hyperparameters
 learning_rate = 7.5e-7
 batch_size = 32
-epochs = 20
+epochs = 40
 optimizer = optimizers.Adam(learning_rate)
 
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=[Precision(), Recall()])
-history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val))
+history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
 print("Training done...\n")
 
-print("Results on Test Dataset")
-results = model.evaluate(X_test, y_test, batch_size=batch_size)
