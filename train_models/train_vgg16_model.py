@@ -5,8 +5,6 @@ from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras.metrics import Precision, Recall
 from sklearn.preprocessing import LabelEncoder
 
-import tensorflow as tf
-import tensorflow_io as tfio
 import numpy as np
 import glob
 import random
@@ -49,6 +47,7 @@ for image in glob.glob("image_data/chest_xray/test/PNEUMONIA_virus/*.*"):
     image = np.array(image)
     test_set.append((image, 'pneumonia_virus'))
 
+random.seed(1)
 random.shuffle(train_set)
 random.shuffle(test_set)
 
