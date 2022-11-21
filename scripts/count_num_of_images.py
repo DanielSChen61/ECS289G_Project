@@ -18,43 +18,14 @@ test_virus_count = 0
 
 
 # Training dataset -----
-for image in glob.glob("image_data/chest_xray/train/NORMAL/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
-    image = np.array(image)
-    train_set.append((image, 'normal'))
-    train_normal_count += 1
-
-
-for image in glob.glob("image_data/chest_xray/train/PNEUMONIA_bacteria/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
-    image = np.array(image)
-    train_set.append((image, 'pneumonia_bacteria'))
-    train_bacteria_count += 1
-
-for image in glob.glob("image_data/chest_xray/train/PNEUMONIA_virus/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
-    image = np.array(image)
-    train_set.append((image, 'pneumonia_virus'))
-    train_virus_count += 1
+train_normal_count += len(glob.glob("../image_data/chest_xray/train/NORMAL/*.*"))
+train_bacteria_count += len(glob.glob("../image_data/chest_xray/train/PNEUMONIA_bacteria/*.*"))
+train_virus_count += len(glob.glob("../image_data/chest_xray/train/PNEUMONIA_virus/*.*"))
 
 # Test dataset -----
-for image in glob.glob("image_data/chest_xray/test/NORMAL/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
-    image = np.array(image)
-    test_set.append((image, 'normal'))
-    test_normal_count += 1
-
-for image in glob.glob("image_data/chest_xray/test/PNEUMONIA_bacteria/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
-    image = np.array(image)
-    test_set.append((image, 'pneumonia_bacteria'))
-    test_bacteria_count += 1
-
-for image in glob.glob("image_data/chest_xray/test/PNEUMONIA_virus/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
-    image = np.array(image)
-    test_set.append((image, 'pneumonia_virus'))
-    test_virus_count += 1
+test_normal_count += len(glob.glob("../image_data/chest_xray/test/NORMAL/*.*"))
+test_bacteria_count += len(glob.glob("../image_data/chest_xray/test/PNEUMONIA_bacteria/*.*"))
+test_virus_count += len(glob.glob("../image_data/chest_xray/test/PNEUMONIA_virus/*.*"))
 
 train_total_count = train_normal_count + train_bacteria_count + train_virus_count
 test_total_count = test_normal_count + test_bacteria_count + test_virus_count
