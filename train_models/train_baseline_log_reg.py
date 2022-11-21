@@ -1,9 +1,8 @@
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_score, recall_score
+from tensorflow.keras.preprocessing.image import load_img
 
-import tensorflow as tf
-import tensorflow_io as tfio
 import numpy as np
 import glob
 import random
@@ -17,37 +16,58 @@ y_train = []
 y_test = []
 
 # normal : 0
-# pneumonia : 1
+# pneumonia_bacteria : 1
+# pneumonia_virus : 2
 
-for file in glob.glob('image_data/stage_2_train_normal_full/*.*'):
-    image_bytes = tf.io.read_file(file)
-    image = tfio.image.decode_dicom_image(image_bytes, dtype=tf.uint16)
-    resized_image = tf.squeeze(tf.image.resize(image, size=(224, 224)), [0])
-    resized_image = tf.image.grayscale_to_rgb(resized_image)
-    resized_image = np.array(resized_image)
-    train_set.append((resized_image, 0))
+for image in glob.glob("../image_data/chest_xray/train/NORMAL/*.*"):
+    image = load_img(image, color_mode='rgb', target_size=(224, 224))
+    image = np.array(image)
+    train_set.append((image, 0))
 
-for file in glob.glob('image_data/stage_2_train_pneumonia_full/*.*'):
-    image_bytes = tf.io.read_file(file)
-    image = tfio.image.decode_dicom_image(image_bytes, dtype=tf.uint16)
-    resized_image = tf.squeeze(tf.image.resize(image, size=(224, 224)), [0])
-    resized_image = tf.image.grayscale_to_rgb(resized_image)
-    resized_image = np.array(resized_image)
-    train_set.append((resized_image, 1))
 
+for image in glob.glob("../image_data/chest_xray/train/PNEUMONIA_bacteria/*.*"):
+    image = load_img(image, color_mode='rgb', target_size=(224, 224))
+    image = np.array(image)
+    train_set.append((image, 1))
+
+for image in glob.glob("../image_data/chest_xray/train/PNEUMONIA_virus/*.*"):
+    image = load_img(image, color_mode='rgb', target_size=(224, 224))
+    image = np.array(image)
+    train_set.append((image, 2))
+
+# Test dataset -----
+for image in glob.glob("../image_data/chest_xray/test/NORMAL/*.*"):
+    image = load_img(image, color_mode='rgb', target_size=(224, 224))
+    image = np.array(image)
+    test_set.append((image, 0))
+
+for image in glob.glob("../image_data/chest_xray/test/PNEUMONIA_bacteria/*.*"):
+    image = load_img(image, color_mode='rgb', target_size=(224, 224))
+    image = np.array(image)
+    test_set.append((image, 1))
+
+for image in glob.glob("../image_data/chest_xray/test/PNEUMONIA_virus/*.*"):
+    image = load_img(image, color_mode='rgb', target_size=(224, 224))
+    image = np.array(image)
+    test_set.append((image, 2))
+
+random.seed(1)
 random.shuffle(train_set)
+random.shuffle(test_set)
 
 train_data = list(zip(*train_set))[0]
 train_labels = list(zip(*train_set))[1]
+test_data = list(zip(*test_set))[0]
+test_labels = list(zip(*test_set))[1]
 
-train_data = np.array(train_data).astype('float32') / 255
+X_train = np.array(train_data).astype('float32') / 255
+X_test = np.array(test_data).astype('float32') / 255
 
-X_train, X_test, y_train, y_test = train_test_split(train_data, train_labels, test_size=0.2, random_state=1)
-train_len = len(X_train)
-test_len = len(X_test)
+X_train = X_train.reshape(5232, 224 * 224 * 3)
+X_test = X_test.reshape(624, 224 * 224 * 3)
 
-X_train = X_train.reshape(train_len, 224 * 224 * 3)
-X_test = X_test.reshape(test_len, 224 * 224 * 3)
+y_train = train_labels
+y_test = test_labels
 
 model = LogisticRegression().fit(X_train, y_train)
 predictions = model.predict(X_test)
@@ -57,6 +77,3 @@ recall = recall_score(y_test, predictions, average='macro')
 
 print(f"Precision: {precision}")
 print(f"Recall: {recall}")
-
-
-
