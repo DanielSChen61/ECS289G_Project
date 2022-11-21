@@ -16,34 +16,34 @@ test_set = []
 
 # Training dataset -----
 for image in glob.glob("../image_data/chest_xray/train/NORMAL/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
+    image = load_img(image, color_mode='rgb', target_size=(299, 299))
     image = np.array(image)
     train_set.append((image, 'normal'))
 
 
 for image in glob.glob("../image_data/chest_xray/train/PNEUMONIA_bacteria/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
+    image = load_img(image, color_mode='rgb', target_size=(299, 299))
     image = np.array(image)
     train_set.append((image, 'pneumonia_bacteria'))
 
 for image in glob.glob("../image_data/chest_xray/train/PNEUMONIA_virus/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
+    image = load_img(image, color_mode='rgb', target_size=(299, 299))
     image = np.array(image)
     train_set.append((image, 'pneumonia_virus'))
 
 # Test dataset -----
 for image in glob.glob("../image_data/chest_xray/test/NORMAL/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
+    image = load_img(image, color_mode='rgb', target_size=(299, 299))
     image = np.array(image)
     test_set.append((image, 'normal'))
 
 for image in glob.glob("../image_data/chest_xray/test/PNEUMONIA_bacteria/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
+    image = load_img(image, color_mode='rgb', target_size=(299, 299))
     image = np.array(image)
     test_set.append((image, 'pneumonia_bacteria'))
 
 for image in glob.glob("../image_data/chest_xray/test/PNEUMONIA_virus/*.*"):
-    image = load_img(image, color_mode='rgb', target_size=(229, 229))
+    image = load_img(image, color_mode='rgb', target_size=(299, 299))
     image = np.array(image)
     test_set.append((image, 'pneumonia_virus'))
     
@@ -65,7 +65,7 @@ y_test = to_categorical(lb.fit_transform(test_labels))
 
 
 # Build the model -----
-inception = InceptionV3(weights='imagenet', include_top=False, input_shape=(229, 229, 3))
+inception = InceptionV3(weights='imagenet', include_top=False, input_shape=(299, 299, 3))
 
 for layer in inception.layers:
     layer.trainable = False
