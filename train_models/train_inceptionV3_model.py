@@ -86,7 +86,7 @@ learning_rate = 7.5e-7
 batch_size = 32
 epochs = 40
 optimizer = optimizers.Adam(learning_rate)
-validation_split = 0.2
+validation_split = 0.5
 
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=[Precision(), Recall()])
 history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=validation_split)

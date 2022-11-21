@@ -72,9 +72,8 @@ for layer in vgg.layers[:15]:
 
 x = vgg.output
 x = layers.Flatten()(x)
+x = layers.BatchNormalization()(x)
 x = layers.Dense(128, activation='relu')(x)
-x = layers.Dropout(0.4)(x)
-x = layers.Dense(64, activation='relu')(x)
 x = layers.Dropout(0.2)(x)
 x = layers.Dense(3, activation='softmax')(x)
 model = Model(inputs=vgg.input, outputs=x)
